@@ -83,6 +83,7 @@ class TimeSeries(list):
       'start' : self.start,
       'end' : self.end,
       'step' : self.step,
+      'consolidationFunc' : self.consolidationFunc,
       'values' : list(self),
     }
 
@@ -104,11 +105,12 @@ def fetchData(requestContext, pathExpr):
     if not results:
       log.info("render.datalib.fetchData :: no results for %s.fetch(%s, %s)" % (node, startTime, endTime))
       continue
-
-    (timeInfo, values) = results
+    (timeInfo, values, aggreg) = results
     (start, end, step) = timeInfo
-
-    series = TimeSeries(node.path, start, end, step, values)
+    if aggreg != "":
+      series = TimeSeries(node.path, start, end, step, values, aggreg)
+    else:
+      series = TimeSeries(node.path, start, end, step, values)
     series.pathExpression = pathExpr #hack to pass expressions through to render functions
     seriesList.append(series)
 
