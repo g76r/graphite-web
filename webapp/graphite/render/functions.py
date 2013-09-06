@@ -126,13 +126,17 @@ def lcm(a, b):
   return a / gcd(a,b) * b
 
 def normalize(seriesLists):
+  step = 1
+  start = 0
+  end = 1
   seriesList = reduce(lambda L1,L2: L1+L2,seriesLists)
-  step = reduce(lcm,[s.step for s in seriesList])
-  for s in seriesList:
-    s.consolidate( step / s.step )
-  start = min([s.start for s in seriesList])
-  end = max([s.end for s in seriesList])
-  end -= (end - start) % step
+  if seriesList:
+    step = reduce(lcm,[s.step for s in seriesList])
+    for s in seriesList:
+      s.consolidate( step / s.step )
+    start = min([s.start for s in seriesList])
+    end = max([s.end for s in seriesList])
+    end -= (end - start) % step
   return (seriesList,start,end,step)
 
 def formatPathExpressions(seriesList):
