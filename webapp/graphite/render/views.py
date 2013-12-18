@@ -14,7 +14,7 @@ limitations under the License."""
 import csv
 import math
 from datetime import datetime
-from time import time
+from time import time, mktime
 from random import shuffle
 from httplib import CannotSendRequest
 from urllib import urlencode
@@ -296,8 +296,8 @@ def parseOptions(request):
     else:
       fromTime = parseATTime('-1d', tzinfo)
 
-    startTime = min(fromTime, untilTime)
-    endTime = max(fromTime, untilTime)
+    startTime = datetime.fromtimestamp(min(mktime(fromTime.utctimetuple()), mktime(untilTime.utctimetuple())))
+    endTime = datetime.fromtimestamp(max(mktime(fromTime.utctimetuple()), mktime(untilTime.utctimetuple())))
     assert startTime != endTime, "Invalid empty time range"
 
     requestOptions['startTime'] = startTime
