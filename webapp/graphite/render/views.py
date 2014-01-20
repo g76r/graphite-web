@@ -296,8 +296,8 @@ def parseOptions(request):
     else:
       fromTime = parseATTime('-1d', tzinfo)
 
-    startTime = datetime.fromtimestamp(min(mktime(fromTime.utctimetuple()), mktime(untilTime.utctimetuple())))
-    endTime = datetime.fromtimestamp(max(mktime(fromTime.utctimetuple()), mktime(untilTime.utctimetuple())))
+    startTime = min(fromTime, untilTime)
+    endTime = max(fromTime, untilTime)
     assert startTime != endTime, "Invalid empty time range"
 
     requestOptions['startTime'] = startTime
