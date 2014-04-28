@@ -63,6 +63,7 @@ FIND_CACHE_DURATION = 300
 FIND_TOLERANCE = 2 * FIND_CACHE_DURATION
 DEFAULT_CACHE_DURATION = 60 #metric data and graphs are cached for one minute by default
 LOG_CACHE_PERFORMANCE = False
+KEY_PREFIX = ''
 
 #Remote rendering settings
 REMOTE_RENDERING = False #if True, rendering is delegated to RENDERING_HOSTS
@@ -191,7 +192,14 @@ else:
 
 # Caching shortcuts
 if MEMCACHE_HOSTS:
-  CACHE_BACKEND = 'memcached://' + ';'.join(MEMCACHE_HOSTS) + ('/?timeout=%d' % DEFAULT_CACHE_DURATION)
+   CACHES = {
+        'default': {
+                'BACKEND': 'django.core.cache.backends.memcached.MemcachedCache',
+                'LOCATION': MEMCACHE_HOSTS,
+                'TIMEOUT': DEFAULT_CACHE_DURATION,
+                'KEY_PREFIX': KEY_PREFIX,
+        }
+   }
 
 # Authentication shortcuts
 if USE_LDAP_AUTH and LDAP_URI is None:
