@@ -2356,10 +2356,12 @@ def constantLine(requestContext, value):
     &target=constantLine(123.456)
 
   """
+  name = "constantLine(%s)" % str(value)
   start = timestamp( requestContext['startTime'] )
   end = timestamp( requestContext['endTime'] )
   step = int((end - start) / 2.0)
   series = TimeSeries(str(value), start, end, step, [value, value, value])
+  series.pathExpression = name
   return [series]
 
 def aggregateLine(requestContext, seriesList, func='avg'):
