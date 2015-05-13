@@ -447,40 +447,45 @@ class Graph:
     if self.outputFormat == 'png':
       self.surface.write_to_png(fileObj)
     else:
-      metaData = {
-        'x': {
-          'start': self.startTime,
-          'end': self.endTime
-        },
-        'options': {
-          'lineWidth': self.lineWidth
-        },
-        'font': self.defaultFontParams,
-        'area': self.area,
-        'series': []
-      }
-
-      if not self.secondYAxis:
-        metaData['y'] = {
-          'top': self.yTop,
-          'bottom': self.yBottom,
-          'step': self.yStep,
-          'labels': self.yLabels,
-          'labelValues': self.yLabelValues
+      if hasattr(self, 'startTime'):
+        hasData = True
+        metaData = {
+          'x': {
+            'start': self.startTime,
+            'end': self.endTime
+          },
+          'options': {
+            'lineWidth': self.lineWidth
+          },
+          'font': self.defaultFontParams,
+          'area': self.area,
+          'series': []
         }
 
-      for series in self.data:
-        if 'stacked' not in series.options:
-          metaData['series'].append({
-            'name': series.name,
-            'start': series.start,
-            'end': series.end,
-            'step': series.step,
-            'valuesPerPoint': series.valuesPerPoint,
-            'color': series.color,
-            'data': series,
-            'options': series.options
-          })
+        if not self.secondYAxis:
+          metaData['y'] = {
+            'top': self.yTop,
+            'bottom': self.yBottom,
+            'step': self.yStep,
+            'labels': self.yLabels,
+            'labelValues': self.yLabelValues
+          }
+
+        for series in self.data:
+          if 'stacked' not in series.options:
+            metaData['series'].append({
+              'name': series.name,
+              'start': series.start,
+              'end': series.end,
+              'step': series.step,
+              'valuesPerPoint': series.valuesPerPoint,
+              'color': series.color,
+              'data': series,
+              'options': series.options
+            })
+      else:
+        hasData = False
+        metaData = { }
 
       self.surface.finish()
       svgData = self.surfaceData.getvalue()
@@ -490,18 +495,19 @@ class Graph:
       svgData = svgData.replace('</svg>\n', '', 1)
       svgData = svgData.replace('</defs>\n<g', '</defs>\n<g class="graphite"', 1)
 
-      # We encode headers using special paths with d^="M -88 -88"
-      # Find these, and turn them into <g> wrappers instead
-      def onHeaderPath(match):
-        name = ''
-        for char in re.findall(r'L -(\d+) -\d+', match.group(1)):
-          name += chr(int(char))
-        return '</g><g data-header="true" class="%s">' % name
-      svgData = re.sub(r'<path.+?d="M -88 -88 (.+?)"/>', onHeaderPath, svgData)
+      if hasData:
+        # We encode headers using special paths with d^="M -88 -88"
+        # Find these, and turn them into <g> wrappers instead
+        def onHeaderPath(match):
+          name = ''
+          for char in re.findall(r'L -(\d+) -\d+', match.group(1)):
+            name += chr(int(char))
+          return '</g><g data-header="true" class="%s">' % name
+        svgData = re.sub(r'<path.+?d="M -88 -88 (.+?)"/>', onHeaderPath, svgData)
 
-      # Replace the first </g><g> with <g>, and close out the last </g> at the end
-      svgData = svgData.replace('</g><g data-header','<g data-header',1) + "</g>"
-      svgData = svgData.replace(' data-header="true"','')
+        # Replace the first </g><g> with <g>, and close out the last </g> at the end
+        svgData = svgData.replace('</g><g data-header','<g data-header',1) + "</g>"
+        svgData = svgData.replace(' data-header="true"','')
 
       fileObj.write(svgData)
       fileObj.write("""<script>
@@ -948,7 +954,7 @@ class LineGraph(Graph):
 
       if 'stacked' in series.options:
         if self.lineMode == 'staircase':
-          xPos = x 
+          xPos = x
         else:
           xPos = x-series.xStep
         if self.secondYAxis:
@@ -1019,10 +1025,10 @@ class LineGraph(Graph):
   def setupYAxis(self):
     seriesWithMissingValues = [ series for series in self.data if None in series ]
 
-    yMinValue = safeMin( [safeMin(series) for series in self.data if not series.options.get('drawAsInfinite')] )
-
-    if yMinValue > 0.0 and self.params.get('drawNullAsZero') and seriesWithMissingValues:
+    if self.params.get('drawNullAsZero') and seriesWithMissingValues:
       yMinValue = 0.0
+    else:
+      yMinValue = safeMin( [safeMin(series) for series in self.data if not series.options.get('drawAsInfinite')] )
 
     if self.areaMode == 'stacked':
       length = safeMin( [len(series) for series in self.data if not series.options.get('drawAsInfinite')] )
@@ -1033,9 +1039,6 @@ class LineGraph(Graph):
       yMaxValue = safeMax( sumSeries )
     else:
       yMaxValue = safeMax( [safeMax(series) for series in self.data if not series.options.get('drawAsInfinite')] )
-
-    if yMaxValue < 0.0 and self.params.get('drawNullAsZero') and seriesWithMissingValues:
-      yMaxValue = 0.0
 
     if yMinValue is None:
       yMinValue = 0.0
